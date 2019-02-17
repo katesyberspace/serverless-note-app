@@ -27,12 +27,9 @@ provider:
   region: ap-southeast-2
 
 
-
-
-
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
-    - Effect: "Allow"
+    - Effect: Allow
       Action:
         - dynamodb:DescribeTable
         - dynamodb:Query
@@ -41,7 +38,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:ap-southeast-2:*:*"
+      Resource: "arn:aws:dynamodb:ap-southeast-2:111287815069:table/notes"
 
 
 # you can define service wide environment variables here

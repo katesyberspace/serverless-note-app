@@ -24,18 +24,24 @@ type Item struct {
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(request events.APIGatewayProxyRequest) (Response, error) {
 	fmt.Println("Received body: ", request.Body)
+	err := dynamodbattribute.UnmarshalMap(request.Body)
+
 	sess, _ := session.NewSession(&aws.Config{
 		Region: aws.String("ap-southeast-2"),
 	})
 	service := dynamodb.New(sess)
 
 	item := request.Body
+	headers := map[string]string{
+		"Access-Control-Allow-Origin": "*",
+		"Access-Control-Allow-Credentials": "true",
+	}
 
 	av, err := dynamodbattribute.MarshalMap(item)
 
 	if err != nil {
 		errorMessage := fmt.Sprintf("Error marshalling item: %+v", err)
-		return Response{Body: errorMessage, StatusCode: 404}, nil
+		return Response{Headers: headers, Body: errorMessage, StatusCode: 404}, nil
 	}
 
 	input := &dynamodb.PutItemInput{
@@ -48,10 +54,11 @@ func Handler(request events.APIGatewayProxyRequest) (Response, error) {
 	if err != nil {
 		errorMessage := fmt.Sprintf("Error adding item ot table: %+v", err)
 		fmt.Printf(errorMessage)
-		return Response{ Body: errorMessage, StatusCode: 400}, nil
+		return Response{Headers: headers, Body: errorMessage, StatusCode: 400}, nil
 	}
 
-	return Response{Body: request.Body, StatusCode: 200}, nil
+
+	return Response{Headers: headers, Body: request.Body, StatusCode: 200}, nil
 
 }
 
