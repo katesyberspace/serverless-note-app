@@ -16,6 +16,8 @@ import (
 // https://serverless.com/framework/docs/providers/aws/events/apigateway/#lambda-proxy-integration
 type Response events.APIGatewayProxyResponse
 
+type Request events.APIGatewayProxyRequest
+
 type Item struct {
 	NoteId string `json:"noteId"`
 	UserId string `json:"userId"`
@@ -23,8 +25,7 @@ type Item struct {
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(request events.APIGatewayProxyRequest) (Response, error) {
-	fmt.Println("Received body: ", request.Body)
-	err := dynamodbattribute.UnmarshalMap(request.Body)
+	fmt.Printf("Received body: %+v", request)
 
 	sess, _ := session.NewSession(&aws.Config{
 		Region: aws.String("ap-southeast-2"),
