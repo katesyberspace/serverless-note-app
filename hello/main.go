@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -25,21 +26,35 @@ type Item struct {
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(request events.APIGatewayProxyRequest) (Response, error) {
-	fmt.Printf("Received body: %+v", request)
+	fmt.Printf("Received request: %+v\n", request)
+	fmt.Printf("body: %s", request.Body)
 
 	sess, _ := session.NewSession(&aws.Config{
 		Region: aws.String("ap-southeast-2"),
 	})
 	service := dynamodb.New(sess)
+	fmt.Printf("dynamodb session started:\n%+v", service)
 
-	item := request.Body
+	rawIn := json.RawMessage(request.Body)
+	bytes, err := rawIn.MarshalJSON()
+	if err != nil {
+		panic(err)
+	}
+
+	var item Item
+	err = json.Unmarshal(bytes, &item)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("item after unmarshalling: %+v", item)
+
 	headers := map[string]string{
 		"Access-Control-Allow-Origin": "*",
 		"Access-Control-Allow-Credentials": "true",
 	}
 
 	av, err := dynamodbattribute.MarshalMap(item)
-
 	if err != nil {
 		errorMessage := fmt.Sprintf("Error marshalling item: %+v", err)
 		return Response{Headers: headers, Body: errorMessage, StatusCode: 404}, nil
@@ -53,7 +68,7 @@ func Handler(request events.APIGatewayProxyRequest) (Response, error) {
 	_ , err = service.PutItem(input)
 
 	if err != nil {
-		errorMessage := fmt.Sprintf("Error adding item ot table: %+v", err)
+		errorMessage := fmt.Sprintf("Error adding item to table: %+v", err)
 		fmt.Printf(errorMessage)
 		return Response{Headers: headers, Body: errorMessage, StatusCode: 400}, nil
 	}
